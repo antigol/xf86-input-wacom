@@ -262,6 +262,16 @@ struct _WacomDeviceRec
 	unsigned int cur_serial; /* current serial in prox */
 	int cur_device_id;	/* current device ID in prox */
 
+	/* distortion */
+	double distortion_topX_border;
+	double distortion_topY_border;
+	double distortion_bottomX_border;
+	double distortion_bottomY_border;
+	double distortion_topX_poly[5];
+	double distortion_topY_poly[5];
+	double distortion_bottomX_poly[5];
+	double distortion_bottomY_poly[5];
+
 	/* button mapping information
 	 *
 	 * 'button' variables are indexed by physical button number (0..nbuttons)

@@ -34,6 +34,8 @@
 #endif
 
 static void wcmBindToSerial(InputInfoPtr pInfo, unsigned int serial);
+static int distortionCorrectionComputePolynomial(double p, double a, double h, double d, double* poly);
+
 
 /*****************************************************************************
 * wcmDevSwitchModeCall --
@@ -82,6 +84,10 @@ int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 static Atom prop_devnode;
 static Atom prop_rotation;
 static Atom prop_tablet_area;
+static Atom prop_tablet_distortion_topX;
+static Atom prop_tablet_distortion_topY;
+static Atom prop_tablet_distortion_bottomX;
+static Atom prop_tablet_distortion_bottomY;
 static Atom prop_pressurecurve;
 static Atom prop_serials;
 static Atom prop_serial_binding;
@@ -225,6 +231,18 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 		values[2] = priv->bottomX;
 		values[3] = priv->bottomY;
 		prop_tablet_area = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_AREA, XA_INTEGER, 32, 4, values);
+	}
+
+	if (!IsPad(priv)) {
+		/* border_width border_offset point_physical point_logical */
+		values[0] = 0;
+		values[1] = 0;
+		values[2] = 0;
+		values[3] = 0;
+		prop_tablet_distortion_topX = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_TOP_X, XA_INTEGER, 32, 4, values);
+		prop_tablet_distortion_topY = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_TOP_Y, XA_INTEGER, 32, 4, values);
+		prop_tablet_distortion_bottomX = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_BOTTOM_X, XA_INTEGER, 32, 4, values);
+		prop_tablet_distortion_bottomY = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_BOTTOM_Y, XA_INTEGER, 32, 4, values);
 	}
 
 	values[0] = common->wcmRotate;
@@ -717,6 +735,66 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			priv->bottomX = values[2];
 			priv->bottomY = values[3];
 		}
+	} else if (property == prop_tablet_distortion_topX)
+	{
+		INT32 *values = (INT32*)prop->data;
+
+		if (prop->size != 4 || prop->format != 32)
+			return BadValue;
+
+		if (!checkonly)
+		{
+			/* border_width border_offset point_physical point_logical */
+			priv->distortion_topX_border = values[0]/1000.0;
+			distortionCorrectionComputePolynomial(
+						values[1]/1000.0, values[2]/1000.0, values[3]/1000.0, values[0]/1000.0,
+					priv->distortion_topX_poly);
+		}
+	} else if (property == prop_tablet_distortion_topY)
+	{
+		INT32 *values = (INT32*)prop->data;
+
+		if (prop->size != 4 || prop->format != 32)
+			return BadValue;
+
+		if (!checkonly)
+		{
+			/* border_width border_offset point_physical point_logical */
+			priv->distortion_topY_border = values[0]/1000.0;
+			distortionCorrectionComputePolynomial(
+						values[1]/1000.0, values[2]/1000.0, values[3]/1000.0, values[0]/1000.0,
+					priv->distortion_topY_poly);
+		}
+	} else if (property == prop_tablet_distortion_bottomX)
+	{
+		INT32 *values = (INT32*)prop->data;
+
+		if (prop->size != 4 || prop->format != 32)
+			return BadValue;
+
+		if (!checkonly)
+		{
+			/* border_width border_offset point_physical point_logical */
+			priv->distortion_bottomX_border = values[0]/1000.0;
+			distortionCorrectionComputePolynomial(
+						values[1]/1000.0, values[2]/1000.0, values[3]/1000.0, values[0]/1000.0,
+					priv->distortion_bottomX_poly);
+		}
+	} else if (property == prop_tablet_distortion_bottomY)
+	{
+		INT32 *values = (INT32*)prop->data;
+
+		if (prop->size != 4 || prop->format != 32)
+			return BadValue;
+
+		if (!checkonly)
+		{
+			/* border_width border_offset point_physical point_logical */
+			priv->distortion_bottomY_border = values[0]/1000.0;
+			distortionCorrectionComputePolynomial(
+						values[1]/1000.0, values[2]/1000.0, values[3]/1000.0, values[0]/1000.0,
+					priv->distortion_bottomY_poly);
+		}
 	} else if (property == prop_pressurecurve)
 	{
 		INT32 *pcurve;
@@ -1071,6 +1149,160 @@ wcmBindToSerial(InputInfoPtr pInfo, unsigned int serial)
 
 	priv->serial = serial;
 
+}
+
+/* P A = L U
+ * P : permutation matrix
+ * L : lower matrix
+ * U : upper matrix
+*/
+static void
+lu_decomposition(int n, const double* A, double* P, double* L, double* U)
+{
+	int k,i,r;
+	double m;
+
+	// P,L = identity
+	for (i = 0; i < n*n; ++i) P[i] = L[i] = 0.0;
+	for (i = 0; i < n*n; i += n+1) P[i] = L[i] = 1.0;
+
+	// U = A
+	for (i = 0; i < n*n; ++i) U[i] = A[i];
+
+	for (k = 0; k < n; ++k) {
+		// find maximum in column k
+		r = k;
+		m = U[r*n+k];
+		for (i = k; i < n; ++i) if (U[i*n+k] > m) {
+			r = i;
+			m = U[i*n+k];
+		}
+
+		if (m > 0.0) {
+			// swap lines r,k
+			if (r != k) {
+				for (i = 0; i < n; ++i) {
+					m = U[r*n+i];
+					U[r*n+i] = U[k*n+i];
+					U[k*n+i] = m;
+					m = P[r*n+i];
+					P[r*n+i] = P[k*n+i];
+					P[k*n+i] = m;
+				}
+				for (i = 0; i < k; ++i) {
+					m = L[r*n+i];
+					L[r*n+i] = L[k*n+i];
+					L[k*n+i] = m;
+				}
+			}
+
+			// make 0's
+			for (i = k+1; i < n; ++i) {
+				L[i*n+k] = U[i*n+k] / U[k*n+k];
+				for (r = 0; r < n; ++r) U[i*n+r] -= L[i*n+k] * U[k*n+r];
+			}
+		}
+	}
+}
+
+/* LUx = b */
+static int
+solve_lu(int n, const double* L, const double* U, const double* b, double* x)
+{
+	int k, i;
+	double s;
+	double* y = (double*)malloc(sizeof(double)*n);
+
+	// Ly = b
+	for (k = 0; k < n; ++k) {
+		s = 0.0;
+		for (i = 0; i < k; ++i) s += L[k*n+i] * y[i];
+		y[k] = b[k] - s;
+	}
+
+	// Ux = y
+	for (k = n-1; k >= 0; --k) {
+		s = 0.0;
+		for (i = n-1; i > k; --i) s += U[k*n+i] * x[i];
+		if (U[k*n+k] == 0.0) {
+			free(y);
+			return 1;
+		}
+		x[k] = (y[k] - s) / U[k*n+k];
+	}
+	free(y);
+	return 0;
+}
+
+
+/* Ax = b */
+static int
+solve_ls(int n, const double* A, const double* b, double* x)
+{
+	int i,k;
+	double *P,*L,*U,*Pb;
+	P = (double*)malloc(sizeof(double)*n*n);
+	L = (double*)malloc(sizeof(double)*n*n);
+	U = (double*)malloc(sizeof(double)*n*n);
+	Pb = (double*)malloc(sizeof(double)*n);
+	lu_decomposition(n, A, P, L, U);
+	for (i = 0; i < n; ++i) {
+		Pb[i] = 0;
+		for (k = 0; k < n; ++k) {
+			Pb[i] += P[i*n+k] * b[k];
+		}
+	}
+	i = solve_lu(n, L, U, Pb, x);
+	free(P);
+	free(L);
+	free(U);
+	free(Pb);
+	return i;
+}
+
+static int
+distortionCorrectionComputePolynomial(double p, double a, double h, double d, double* poly)
+{
+	/* p = offset at the border
+	 * (a,h) = dirtortion point
+	 * d = width of the border zone
+	 *
+	 * poly = {c4, c3... c0}
+	 */
+
+	/* F(x) = c4 x^4 + c3 x^3 + c2 x^2 + c1 x + c0
+	 *
+	 * Constraints => Matrix
+	 * F(0) = p    => 0    0    0   0  1  : p
+	 * F(d) = d    => d^4  d^3  d^2 d  1  : d
+	 * F(a) = h    => a^4  a^3  a^2 a  1  : h
+	 * F'(d) = 1   => 4d^3 3d^2 2d  1  0  : 1
+	 * F'(a) = 1   => 4a^3 3a^2 2a  1  0  : 1
+	 */
+	int r;
+
+	const double Matrix[25] = {
+		0, 0, 0, 0, 1,
+		d*d*d*d, d*d*d, d*d, d, 1,
+		a*a*a*a, a*a*a, a*a, a, 1,
+		4*d*d*d, 3*d*d, 2*d, 1, 0,
+		4*a*a*a, 3*a*a, 2*a, 1, 0
+	};
+	const double rhs[5] = {
+		p,
+		d,
+		h,
+		1,
+		1
+	};
+
+	r = solve_ls(5, Matrix, rhs, poly);
+	if (r != 0) {
+		// set to F(x) = x
+		poly[0] = poly[1] = poly[2] = poly[4] = 0.0;
+		poly[3] = 1.0;
+	}
+	return r;
 }
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */

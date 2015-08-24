@@ -27,6 +27,12 @@
 /* 32 bit, 4 values, top x, top y, bottom x, bottom y */
 #define WACOM_PROP_TABLET_AREA "Wacom Tablet Area"
 
+/* 32 bit, 4 values, border width, border offset, point physical, point logical */
+#define WACOM_PROP_TABLET_DISTORTION_TOP_X "Wacom Tablet Border Distortion Top X"
+#define WACOM_PROP_TABLET_DISTORTION_TOP_Y "Wacom Tablet Border Distortion Top Y"
+#define WACOM_PROP_TABLET_DISTORTION_BOTTOM_X "Wacom Tablet Border Distortion Bottom X"
+#define WACOM_PROP_TABLET_DISTORTION_BOTTOM_Y "Wacom Tablet Border Distortion Bottom Y"
+
 /* 8 bit, 1 value, [0 - 3] (NONE, CW, CCW, HALF) */
 #define WACOM_PROP_ROTATION "Wacom Rotation"
 

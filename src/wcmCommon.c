@@ -438,6 +438,21 @@ static void sendCommonEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 		sendWheelStripEvents(pInfo, ds, first_val, num_vals, valuators);
 }
 
+static double distortionCorrectionInBorders(double coord, double border, double* polynomial)
+{
+	if (coord < border) {
+		double x = coord;
+		int i;
+
+		coord = 0.0;
+		for (i = 0; i < 5; ++i) {
+			coord *= x;
+			coord += polynomial[i];
+		}
+	}
+	return coord;
+}
+
 /* rotate x and y before post X inout events */
 void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 {
@@ -446,19 +461,42 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 	DeviceIntPtr dev = pInfo->dev;
 	AxisInfoPtr axis_x, axis_y;
 	int tmp_coord;
+	double dcoord;
 
 	/* scale into on topX/topY area */
 	axis_x = &dev->valuator->axes[0];
 	axis_y = &dev->valuator->axes[1];
 
 	/* Don't try to scale relative axes */
-	if (axis_x->max_value > axis_x->min_value)
-		*x = xf86ScaleAxis(*x, axis_x->max_value, axis_x->min_value,
-				   priv->bottomX, priv->topX);
+	if (axis_x->max_value > axis_x->min_value) {
+		dcoord = (*x - priv->topX) / (double)(priv->bottomX - priv->topX);
+		dcoord = distortionCorrectionInBorders(dcoord, priv->distortion_topX_border, priv->distortion_topX_poly);
+		dcoord = 1.0 - dcoord;
+		dcoord = distortionCorrectionInBorders(dcoord, priv->distortion_bottomX_border, priv->distortion_bottomX_poly);
+		dcoord = 1.0 - dcoord;
 
-	if (axis_y->max_value > axis_y->min_value)
-		*y = xf86ScaleAxis(*y, axis_y->max_value, axis_y->min_value,
-				   priv->bottomY, priv->topY);
+		//*x = dcoord * (priv->bottomX - priv->topX) + priv->topX;
+		//*x = xf86ScaleAxis(*x, axis_x->max_value, axis_x->min_value,
+		//		   priv->bottomX, priv->topX);
+
+		*x = round(dcoord * (axis_x->max_value - axis_x->min_value) + axis_x->min_value);
+		if (*x < axis_x->min_value) *x = axis_x->min_value;
+		if (*x > axis_x->max_value) *x = axis_x->max_value;
+	}
+	
+	if (axis_y->max_value > axis_y->min_value) {
+		dcoord = (*y - priv->topY) / (double)(priv->bottomY - priv->topY);
+		dcoord = distortionCorrectionInBorders(dcoord, priv->distortion_topY_border, priv->distortion_topY_poly);
+		dcoord = 1.0 - dcoord;
+		dcoord = distortionCorrectionInBorders(dcoord, priv->distortion_bottomY_border, priv->distortion_bottomY_poly);
+		dcoord = 1.0 - dcoord;
+		//*y = dcoord * (priv->bottomY - priv->topY) + priv->topY;
+		//*y = xf86ScaleAxis(*y, axis_y->max_value, axis_y->min_value,
+		//		   priv->bottomY, priv->topY);
+		*y = round(dcoord * (axis_y->max_value - axis_y->min_value) + axis_y->min_value);
+		if (*y < axis_y->min_value) *y = axis_y->min_value;
+		if (*y > axis_y->max_value) *y = axis_y->max_value;
+	}
 
 	/* coordinates are now in the axis rage we advertise for the device */
 
