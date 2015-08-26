@@ -233,11 +233,11 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 
 	if (!IsPad(priv)) {
 		/* border_width border_offset point_physical point_logical */
-		values[0] = 0;
-		values[1] = 0;
-		values[2] = 0;
-		values[3] = 0;
-		values[4] = 0;
+		values[0] = 0; // border
+		values[1] = 0; // x^3
+		values[2] = 0; // x^2
+		values[3] = 1000; // x
+		values[4] = 0; // 1
 		prop_tablet_distortion_topX = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_TOP_X, XA_INTEGER, 32, 5, values);
 		prop_tablet_distortion_topY = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_TOP_Y, XA_INTEGER, 32, 5, values);
 		prop_tablet_distortion_bottomX = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_BOTTOM_X, XA_INTEGER, 32, 5, values);
@@ -738,7 +738,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	{
 		INT32 *values = (INT32*)prop->data;
 
-		if (prop->size != 4 || prop->format != 32)
+		if (prop->size != 5 || prop->format != 32)
 			return BadValue;
 
 		if (!checkonly)
@@ -754,7 +754,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	{
 		INT32 *values = (INT32*)prop->data;
 
-		if (prop->size != 4 || prop->format != 32)
+		if (prop->size != 5 || prop->format != 32)
 			return BadValue;
 
 		if (!checkonly)
@@ -770,7 +770,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	{
 		INT32 *values = (INT32*)prop->data;
 
-		if (prop->size != 4 || prop->format != 32)
+		if (prop->size != 5 || prop->format != 32)
 			return BadValue;
 
 		if (!checkonly)
@@ -786,7 +786,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	{
 		INT32 *values = (INT32*)prop->data;
 
-		if (prop->size != 4 || prop->format != 32)
+		if (prop->size != 5 || prop->format != 32)
 			return BadValue;
 
 		if (!checkonly)
