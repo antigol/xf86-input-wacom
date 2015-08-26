@@ -263,14 +263,14 @@ struct _WacomDeviceRec
 	int cur_device_id;	/* current device ID in prox */
 
 	/* distortion */
-	double distortion_topX_border;
-	double distortion_topY_border;
-	double distortion_bottomX_border;
-	double distortion_bottomY_border;
-	double distortion_topX_poly[4];
-	double distortion_topY_poly[4];
-	double distortion_bottomX_poly[4];
-	double distortion_bottomY_poly[4];
+	float distortion_topX_border;
+	float distortion_topY_border;
+	float distortion_bottomX_border;
+	float distortion_bottomY_border;
+	float distortion_topX_poly[4];
+	float distortion_topY_poly[4];
+	float distortion_bottomX_poly[4];
+	float distortion_bottomY_poly[4];
 
 	/* button mapping information
 	 *

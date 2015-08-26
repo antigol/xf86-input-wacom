@@ -438,10 +438,10 @@ static void sendCommonEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 		sendWheelStripEvents(pInfo, ds, first_val, num_vals, valuators);
 }
 
-static double wcmBorderDistortionCorrection(double coord, double border, double* polynomial)
+static double wcmBorderDistortionCorrection(float coord, float border, float* polynomial)
 {
 	if (coord < border) {
-		double x = coord;
+		float x = coord;
 		int i;
 
 		coord = 0.0;
@@ -461,7 +461,7 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 	DeviceIntPtr dev = pInfo->dev;
 	AxisInfoPtr axis_x, axis_y;
 	int tmp_coord;
-	double d;
+	float d;
 
 	/* scale into on topX/topY area */
 	axis_x = &dev->valuator->axes[0];
@@ -469,7 +469,7 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 
 	/* Don't try to scale relative axes */
 	if (axis_x->max_value > axis_x->min_value) {
-		d = (*x - priv->topX) / (double)(priv->bottomX - priv->topX);
+		d = (*x - priv->topX) / (float)(priv->bottomX - priv->topX);
 		d = wcmBorderDistortionCorrection(d, priv->distortion_topX_border, priv->distortion_topX_poly);
 		d = 1.0 - d;
 		d = wcmBorderDistortionCorrection(d, priv->distortion_bottomX_border, priv->distortion_bottomX_poly);
@@ -481,7 +481,7 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 	}
 	
 	if (axis_y->max_value > axis_y->min_value) {
-		d = (*y - priv->topY) / (double)(priv->bottomY - priv->topY);
+		d = (*y - priv->topY) / (float)(priv->bottomY - priv->topY);
 		d = wcmBorderDistortionCorrection(d, priv->distortion_topY_border, priv->distortion_topY_poly);
 		d = 1.0 - d;
 		d = wcmBorderDistortionCorrection(d, priv->distortion_bottomY_border, priv->distortion_bottomY_poly);
