@@ -438,7 +438,7 @@ static void sendCommonEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 		sendWheelStripEvents(pInfo, ds, first_val, num_vals, valuators);
 }
 
-static double wcmDistortionCorrectionInBorders(double coord, double border, double* polynomial)
+static double wcmBorderDistortionCorrection(double coord, double border, double* polynomial)
 {
 	if (coord < border) {
 		double x = coord;
@@ -470,9 +470,9 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 	/* Don't try to scale relative axes */
 	if (axis_x->max_value > axis_x->min_value) {
 		dcoord = (*x - priv->topX) / (double)(priv->bottomX - priv->topX);
-		dcoord = wcmDistortionCorrectionInBorders(dcoord, priv->distortion_topX_border, priv->distortion_topX_poly);
+		dcoord = wcmBorderDistortionCorrection(dcoord, priv->distortion_topX_border, priv->distortion_topX_poly);
 		dcoord = 1.0 - dcoord;
-		dcoord = wcmDistortionCorrectionInBorders(dcoord, priv->distortion_bottomX_border, priv->distortion_bottomX_poly);
+		dcoord = wcmBorderDistortionCorrection(dcoord, priv->distortion_bottomX_border, priv->distortion_bottomX_poly);
 		dcoord = 1.0 - dcoord;
 
 		//*x = dcoord * (priv->bottomX - priv->topX) + priv->topX;
@@ -486,9 +486,9 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 	
 	if (axis_y->max_value > axis_y->min_value) {
 		dcoord = (*y - priv->topY) / (double)(priv->bottomY - priv->topY);
-		dcoord = wcmDistortionCorrectionInBorders(dcoord, priv->distortion_topY_border, priv->distortion_topY_poly);
+		dcoord = wcmBorderDistortionCorrection(dcoord, priv->distortion_topY_border, priv->distortion_topY_poly);
 		dcoord = 1.0 - dcoord;
-		dcoord = wcmDistortionCorrectionInBorders(dcoord, priv->distortion_bottomY_border, priv->distortion_bottomY_poly);
+		dcoord = wcmBorderDistortionCorrection(dcoord, priv->distortion_bottomY_border, priv->distortion_bottomY_poly);
 		dcoord = 1.0 - dcoord;
 		//*y = dcoord * (priv->bottomY - priv->topY) + priv->topY;
 		//*y = xf86ScaleAxis(*y, axis_y->max_value, axis_y->min_value,

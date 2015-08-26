@@ -17,7 +17,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "wcmLinearMath.h"
+#include "wcmDistortion.h"
 #include <stdlib.h>
 #include <math.h>
 
@@ -31,6 +31,7 @@ lu_decomposition(int n, const double* A, double* P, double* L, double* U)
 {
 	int k,i,j,r;
 	double d, e;
+	r = 0; // To avoid warning: 'r' may be used uninitialized in this function
 
 	// P,L = identity
 	for (i = 0; i < n*n; ++i) {
@@ -245,4 +246,55 @@ int wcmLeastSquaresWithConstraint(int m, int n, int p,
 	free(rhs);
 	free(sol);
 	return k;
+}
+
+int distortionCorrectionComputePolynomial(double d, double p, double a, double h, double* poly)
+{
+	/* p = offset at the border
+	 * (a,h) = dirtortion point
+	 * d = width of the border zone
+	 *
+	 * poly = {c3,... c0}
+	 */
+
+	/* F(x) = c3 x^3 + c2 x^2 + c1 x + c0
+	 *
+	 * Minimize    => Matrix
+	 * F(0) = p    => 0    0   0  1  : p
+	 * F(a) = h    => a^3  a^2 a  1  : h
+	 * F'(d) = 1   => 3d^2 2d  1  0  : 1
+	 * F'(a) = 1   => 3a^2 2a  1  0  : 1
+	 *
+	 * Under Constraints
+	 * F(d) = d    => d^3  d^2 d  1  : d
+	 */
+	if (d > 0.0) {
+		int r;
+		const double Matrix[16] = {
+			0,        0,      0,     1*3.,
+			a*a*a,    a*a,    a,     1,
+			3*d*d/2., 2*d/2., 1./2., 0,
+			3*a*a/2., 2*a/2., 1./2., 0
+		};
+		const double rhs[4] = {
+			p*3.,
+			h,
+			1./2.,
+			1./2.
+		};
+		const double Constraints[4] = {
+			d*d*d,    d*d,    d,     1,
+		};
+		const double crhs[1] = {
+			d
+		};
+
+		r = wcmLeastSquaresWithConstraint(4, 4, 1, Matrix, rhs, Constraints, crhs, poly);
+		if (r == 0) return 0;
+	}
+	poly[0] = 0.0; // x^3
+	poly[1] = 0.0; // x^2
+	poly[2] = 1.0; // x
+	poly[3] = 0.0;
+	return 1;
 }

@@ -17,8 +17,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef __XF86_WCMLINEARMATH_H
-#define __XF86_WCMLINEARMATH_H
+#ifndef __XF86_WCMDISTORTION_H
+#define __XF86_WCMDISTORTION_H
 
 /* Solve Ax = b where A is square with an LU factorization */
 int wcmSolveLS(int n, const double* A, const double* b, double* x);
@@ -39,4 +39,7 @@ int wcmLeastSquaresWithConstraint(int m, int n, int p,
 								  const double* C, const double* e,
 								  double* x);
 
-#endif // __XF86_WCMLINEARMATH_H
+
+int distortionCorrectionComputePolynomial(double d, double p, double a, double h, double* poly);
+
+#endif // __XF86_WCMDISTORTION_H

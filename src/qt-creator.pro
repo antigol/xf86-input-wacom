@@ -7,7 +7,7 @@ HEADERS += \
     ../include/wacom-properties.h \
     ../include/wacom-util.h \
     ../include/Xwacom.h \
-    wcmLinearMath.h
+    wcmDistortion.h
 
 SOURCES += \
     wcmCommon.c \
@@ -19,7 +19,7 @@ SOURCES += \
     wcmValidateDevice.c \
     wcmXCommand.c \
     xf86Wacom.c \
-    wcmLinearMath.c
+    wcmDistortion.c
 
 INCLUDEPATH += "../include" \
     "/usr/include/xorg/"

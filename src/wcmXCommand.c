@@ -23,7 +23,7 @@
 
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
-#include "wcmLinearMath.h"
+#include "wcmDistortion.h"
 #include <exevents.h>
 #include <xf86_OSproc.h>
 
@@ -35,8 +35,6 @@
 #endif
 
 static void wcmBindToSerial(InputInfoPtr pInfo, unsigned int serial);
-static int distortionCorrectionComputePolynomial(double d, double p, double a, double h, double* poly);
-
 
 /*****************************************************************************
 * wcmDevSwitchModeCall --
@@ -1150,66 +1148,6 @@ wcmBindToSerial(InputInfoPtr pInfo, unsigned int serial)
 
 	priv->serial = serial;
 
-}
-
-static int
-distortionCorrectionComputePolynomial(double d, double p, double a, double h, double* poly)
-{
-	/* p = offset at the border
-	 * (a,h) = dirtortion point
-	 * d = width of the border zone
-	 *
-	 * poly = {c3,... c0}
-	 */
-
-	/* F(x) = c3 x^3 + c2 x^2 + c1 x + c0
-	 *
-	 * Minimize    => Matrix
-	 * F(0) = p    => 0    0   0  1  : p
-	 * F(a) = h    => a^3  a^2 a  1  : h
-	 * F'(d) = 1   => 3d^2 2d  1  0  : 1
-	 * F'(a) = 1   => 3a^2 2a  1  0  : 1
-	 *
-	 * Under Constraints
-	 * F(d) = d    => d^3  d^2 d  1  : d
-	 */
-	int r, i;
-
-	double Matrix[16] = {
-		0,     0,   0, 1,
-		a*a*a, a*a, a, 1,
-		3*d*d, 2*d, 1, 0,
-		3*a*a, 2*a, 1, 0
-	};
-	double rhs[4] = {
-		p,
-		h,
-		1,
-		1
-	};
-	double Constraints[4] = {
-		d*d*d, d*d, d, 1,
-	};
-	double crhs[1] = {
-		d
-	};
-
-	for (i = 0; i < 4; ++i) {
-		Matrix[2*4+i] /= 2.0;
-		Matrix[3*4+i] /= 2.0;
-	}
-	rhs[2] /= 2.0;
-	rhs[3] /= 2.0;
-
-	r = wcmLeastSquaresWithConstraint(4, 4, 1, Matrix, rhs, Constraints, crhs, poly);
-	if (r != 0) {
-		// set to F(x) = x
-		poly[0] = 0.0; // x^3
-		poly[1] = 0.0; // x^2
-		poly[2] = 1.0; // x
-		poly[3] = 0.0;
-	}
-	return r;
 }
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */
