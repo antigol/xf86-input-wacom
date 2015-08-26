@@ -456,8 +456,7 @@ static double wcmDistortionCorrectionInBorders(double coord, double border, doub
 /* rotate x and y before post X inout events */
 void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 {
-	WacomDevicePtr priv;
-	priv = (WacomDevicePtr) pInfo->private;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	WacomCommonPtr common = priv->common;
 	DeviceIntPtr dev = pInfo->dev;
 	AxisInfoPtr axis_x, axis_y;
