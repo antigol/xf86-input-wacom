@@ -461,7 +461,7 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 	DeviceIntPtr dev = pInfo->dev;
 	AxisInfoPtr axis_x, axis_y;
 	int tmp_coord;
-	double dcoord;
+	double d;
 
 	/* scale into on topX/topY area */
 	axis_x = &dev->valuator->axes[0];
@@ -469,31 +469,25 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 
 	/* Don't try to scale relative axes */
 	if (axis_x->max_value > axis_x->min_value) {
-		dcoord = (*x - priv->topX) / (double)(priv->bottomX - priv->topX);
-		dcoord = wcmBorderDistortionCorrection(dcoord, priv->distortion_topX_border, priv->distortion_topX_poly);
-		dcoord = 1.0 - dcoord;
-		dcoord = wcmBorderDistortionCorrection(dcoord, priv->distortion_bottomX_border, priv->distortion_bottomX_poly);
-		dcoord = 1.0 - dcoord;
+		d = (*x - priv->topX) / (double)(priv->bottomX - priv->topX);
+		d = wcmBorderDistortionCorrection(d, priv->distortion_topX_border, priv->distortion_topX_poly);
+		d = 1.0 - d;
+		d = wcmBorderDistortionCorrection(d, priv->distortion_bottomX_border, priv->distortion_bottomX_poly);
+		d = 1.0 - d;
 
-		//*x = dcoord * (priv->bottomX - priv->topX) + priv->topX;
-		//*x = xf86ScaleAxis(*x, axis_x->max_value, axis_x->min_value,
-		//		   priv->bottomX, priv->topX);
-
-		*x = round(dcoord * (axis_x->max_value - axis_x->min_value) + axis_x->min_value);
+		*x = round(d * (axis_x->max_value - axis_x->min_value) + axis_x->min_value);
 		if (*x < axis_x->min_value) *x = axis_x->min_value;
 		if (*x > axis_x->max_value) *x = axis_x->max_value;
 	}
 	
 	if (axis_y->max_value > axis_y->min_value) {
-		dcoord = (*y - priv->topY) / (double)(priv->bottomY - priv->topY);
-		dcoord = wcmBorderDistortionCorrection(dcoord, priv->distortion_topY_border, priv->distortion_topY_poly);
-		dcoord = 1.0 - dcoord;
-		dcoord = wcmBorderDistortionCorrection(dcoord, priv->distortion_bottomY_border, priv->distortion_bottomY_poly);
-		dcoord = 1.0 - dcoord;
-		//*y = dcoord * (priv->bottomY - priv->topY) + priv->topY;
-		//*y = xf86ScaleAxis(*y, axis_y->max_value, axis_y->min_value,
-		//		   priv->bottomY, priv->topY);
-		*y = round(dcoord * (axis_y->max_value - axis_y->min_value) + axis_y->min_value);
+		d = (*y - priv->topY) / (double)(priv->bottomY - priv->topY);
+		d = wcmBorderDistortionCorrection(d, priv->distortion_topY_border, priv->distortion_topY_poly);
+		d = 1.0 - d;
+		d = wcmBorderDistortionCorrection(d, priv->distortion_bottomY_border, priv->distortion_bottomY_poly);
+		d = 1.0 - d;
+
+		*y = round(d * (axis_y->max_value - axis_y->min_value) + axis_y->min_value);
 		if (*y < axis_y->min_value) *y = axis_y->min_value;
 		if (*y > axis_y->max_value) *y = axis_y->max_value;
 	}
