@@ -13,7 +13,4 @@ DRIVER_SOURCES= \
 	$(top_srcdir)/src/wcmXCommand.c \
 	$(top_srcdir)/src/wcmValidateDevice.c \
 	$(top_srcdir)/src/wcmTouchFilter.c \
-	$(top_srcdir)/src/wcmTouchFilter.h \
-	$(top_srcdir)/src/wcmDistortion.c \
-	$(top_srcdir)/src/wcmDistortion.h
-	
+	$(top_srcdir)/src/wcmTouchFilter.h

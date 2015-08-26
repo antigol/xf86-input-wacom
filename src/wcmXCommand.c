@@ -23,7 +23,6 @@
 
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
-#include "wcmDistortion.h"
 #include <exevents.h>
 #include <xf86_OSproc.h>
 
@@ -238,10 +237,11 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 		values[1] = 0;
 		values[2] = 0;
 		values[3] = 0;
-		prop_tablet_distortion_topX = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_TOP_X, XA_INTEGER, 32, 4, values);
-		prop_tablet_distortion_topY = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_TOP_Y, XA_INTEGER, 32, 4, values);
-		prop_tablet_distortion_bottomX = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_BOTTOM_X, XA_INTEGER, 32, 4, values);
-		prop_tablet_distortion_bottomY = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_BOTTOM_Y, XA_INTEGER, 32, 4, values);
+		values[4] = 0;
+		prop_tablet_distortion_topX = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_TOP_X, XA_INTEGER, 32, 5, values);
+		prop_tablet_distortion_topY = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_TOP_Y, XA_INTEGER, 32, 5, values);
+		prop_tablet_distortion_bottomX = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_BOTTOM_X, XA_INTEGER, 32, 5, values);
+		prop_tablet_distortion_bottomY = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION_BOTTOM_Y, XA_INTEGER, 32, 5, values);
 	}
 
 	values[0] = common->wcmRotate;
@@ -745,9 +745,10 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		{
 			/* border_width border_offset point_physical point_logical */
 			priv->distortion_topX_border = values[0]/1000.0;
-			distortionCorrectionComputePolynomial(
-						values[0]/1000.0, values[1]/1000.0, values[2]/1000.0, values[3]/1000.0,
-					priv->distortion_topX_poly);
+			priv->distortion_topX_poly[0] = values[0]/1000.0;
+			priv->distortion_topX_poly[1] = values[1]/1000.0;
+			priv->distortion_topX_poly[2] = values[2]/1000.0;
+			priv->distortion_topX_poly[3] = values[3]/1000.0;
 		}
 	} else if (property == prop_tablet_distortion_topY)
 	{
@@ -760,9 +761,10 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		{
 			/* border_width border_offset point_physical point_logical */
 			priv->distortion_topY_border = values[0]/1000.0;
-			distortionCorrectionComputePolynomial(
-						values[0]/1000.0, values[1]/1000.0, values[2]/1000.0, values[3]/1000.0,
-					priv->distortion_topY_poly);
+			priv->distortion_topY_poly[0] = values[0]/1000.0;
+			priv->distortion_topY_poly[1] = values[1]/1000.0;
+			priv->distortion_topY_poly[2] = values[2]/1000.0;
+			priv->distortion_topY_poly[3] = values[3]/1000.0;
 		}
 	} else if (property == prop_tablet_distortion_bottomX)
 	{
@@ -775,9 +777,10 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		{
 			/* border_width border_offset point_physical point_logical */
 			priv->distortion_bottomX_border = values[0]/1000.0;
-			distortionCorrectionComputePolynomial(
-						values[0]/1000.0, values[1]/1000.0, values[2]/1000.0, values[3]/1000.0,
-					priv->distortion_bottomX_poly);
+			priv->distortion_bottomX_poly[0] = values[0]/1000.0;
+			priv->distortion_bottomX_poly[1] = values[1]/1000.0;
+			priv->distortion_bottomX_poly[2] = values[2]/1000.0;
+			priv->distortion_bottomX_poly[3] = values[3]/1000.0;
 		}
 	} else if (property == prop_tablet_distortion_bottomY)
 	{
@@ -790,9 +793,10 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		{
 			/* border_width border_offset point_physical point_logical */
 			priv->distortion_bottomY_border = values[0]/1000.0;
-			distortionCorrectionComputePolynomial(
-						values[0]/1000.0, values[1]/1000.0, values[2]/1000.0, values[3]/1000.0,
-					priv->distortion_bottomY_poly);
+			priv->distortion_bottomY_poly[0] = values[0]/1000.0;
+			priv->distortion_bottomY_poly[1] = values[1]/1000.0;
+			priv->distortion_bottomY_poly[2] = values[2]/1000.0;
+			priv->distortion_bottomY_poly[3] = values[3]/1000.0;
 		}
 	} else if (property == prop_pressurecurve)
 	{
