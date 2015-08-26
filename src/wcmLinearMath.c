@@ -19,6 +19,7 @@
 
 #include "wcmLinearMath.h"
 #include <stdlib.h>
+#include <math.h>
 
 /* P A = L U
  * P : permutation matrix
@@ -48,7 +49,7 @@ lu_decomposition(int n, const double* A, double* P, double* L, double* U)
 		// find maximum in column k
 		d = -1.0;
 		for (i = k; i < n; ++i) {
-			e = abs(U[i*n+k]);
+			e = fabs(U[i*n+k]);
 			if (e > d) {
 				r = i;
 				d = e;
