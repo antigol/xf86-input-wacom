@@ -37,7 +37,7 @@ lu_decomposition(int n, const double* A, double* P, double* L, double* U)
 		P[i] = 0.0;
 		L[i] = 0.0;
 	}
-	for (i = 0; i < n*n; i += (n+1)) {
+	for (i = 0; i < n*n; i += n+1) {
 		P[i] = 1.0;
 		L[i] = 1.0;
 	}
@@ -77,9 +77,9 @@ lu_decomposition(int n, const double* A, double* P, double* L, double* U)
 
 			// make 0's
 			for (i = k+1; i < n; ++i) {
-				L[i*n+k] = U[i*n+k] / U[k*n+k];
+				d = L[i*n+k] = U[i*n+k] / U[k*n+k];
 				for (j = 0; j < n; ++j)
-					U[i*n+j] = U[i*n+j] - L[i*n+k] * U[k*n+j];
+					U[i*n+j] -= d * U[k*n+j];
 			}
 		}
 	}
@@ -129,7 +129,9 @@ int wcmSolveLS(int n, const double* A, const double* b, double* x)
 	L  = (double*)malloc(sizeof(double)*n*n);
 	U  = (double*)malloc(sizeof(double)*n*n);
 	Pb = (double*)malloc(sizeof(double)*n);
+
 	lu_decomposition(n, A, P, L, U);
+
 	for (i = 0; i < n; ++i) {
 		Pb[i] = 0;
 		for (k = 0; k < n; ++k) {
@@ -137,6 +139,7 @@ int wcmSolveLS(int n, const double* A, const double* b, double* x)
 		}
 	}
 	i = solve_lu(n, L, U, Pb, x);
+
 	free(P);
 	free(L);
 	free(U);

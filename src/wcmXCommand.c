@@ -1173,26 +1173,33 @@ distortionCorrectionComputePolynomial(double d, double p, double a, double h, do
 	 * Under Constraints
 	 * F(d) = d    => d^3  d^2 d  1  : d
 	 */
-	int r;
+	int r, i;
 
-	const double Matrix[16] = {
+	double Matrix[16] = {
 		0,     0,   0, 1,
 		a*a*a, a*a, a, 1,
 		3*d*d, 2*d, 1, 0,
 		3*a*a, 2*a, 1, 0
 	};
-	const double rhs[4] = {
+	double rhs[4] = {
 		p,
 		h,
 		1,
 		1
 	};
-	const double Constraints[4] = {
+	double Constraints[4] = {
 		d*d*d, d*d, d, 1,
 	};
-	const double crhs[1] = {
+	double crhs[1] = {
 		d
 	};
+
+	for (i = 0; i < 4; ++i) {
+		Matrix[2*4+i] /= 2.0;
+		Matrix[3*4+i] /= 2.0;
+	}
+	rhs[2] /= 2.0;
+	rhs[3] /= 2.0;
 
 	r = wcmLeastSquaresWithConstraint(4, 4, 1, Matrix, rhs, Constraints, crhs, poly);
 	if (r != 0) {
