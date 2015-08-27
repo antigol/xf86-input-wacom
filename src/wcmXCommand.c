@@ -719,7 +719,7 @@ int wcmDeleteProperty(DeviceIntPtr dev, Atom property)
 	return (i >= 0) ? BadAccess : Success;
 }
 
-static int setDistortionProperty(float* values, float *border, float *polynomial)
+static void setDistortionProperty(float* values, float *border, float *polynomial)
 {
 	/* border_width border_offset point_physical point_logical */
 	*border       = values[0];
