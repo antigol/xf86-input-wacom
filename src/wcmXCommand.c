@@ -721,12 +721,11 @@ int wcmDeleteProperty(DeviceIntPtr dev, Atom property)
 
 static void setDistortionProperty(float* values, float *border, float *polynomial)
 {
-	/* border_width border_offset point_physical point_logical */
-	*border       = values[0];
-	polynomial[0] = values[1];
-	polynomial[1] = values[2];
-	polynomial[2] = values[3];
-	polynomial[3] = values[4];
+	*border       = values[0]; // border width relatively to the screen dimension
+	polynomial[0] = values[1]; // x^3 coefficient of the polynomial
+	polynomial[1] = values[2]; // x^2 coefficient
+	polynomial[2] = values[3]; // x   coefficient
+	polynomial[3] = values[4]; // constant coefficient
 }
 
 int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,

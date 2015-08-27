@@ -442,13 +442,13 @@ static double wcmBorderDistortionCorrection(double coord, float border, float* p
 {
 	if (coord < border) {
 		double x = coord;
-		int i;
-
-		coord = 0.0;
-		for (i = 0; i < 4; ++i) {
-			coord *= x;
-			coord += polynomial[i];
-		}
+		coord  = polynomial[0];
+		coord *= x;
+		coord += polynomial[1]; // I wonder if double+float is slower than double+double
+		coord *= x;
+		coord += polynomial[2];
+		coord *= x;
+		coord += polynomial[3];
 	}
 	return coord;
 }
