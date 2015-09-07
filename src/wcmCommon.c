@@ -438,19 +438,24 @@ static void sendCommonEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 		sendWheelStripEvents(pInfo, ds, first_val, num_vals, valuators);
 }
 
-static double wcmBorderDistortionCorrection(double coord, float border, float* polynomial)
+/* compute the polynomial of order /order
+ * /polynomial must contain coefficients from the higher order to the constant
+ *          { /in         if /in < /limit
+ * result = {
+ *          { Poly(/in)   if /in >= /limit
+ */
+static float wcmComputePolynomial(float in, float limit, float* polynomial, int order)
 {
-	if (coord < border) {
-		double x = coord;
-		coord  = polynomial[0];
-		coord *= x;
-		coord += polynomial[1]; // I wonder if double+float is slower than double+double
-		coord *= x;
-		coord += polynomial[2];
-		coord *= x;
-		coord += polynomial[3];
+	if (in < limit) {
+		int i;
+		float out = polynomial[0];
+		for (i = 1; i <= order; ++i) {
+			out *= in;
+			out += polynomial[i];
+		}
+		return out;
 	}
-	return coord;
+	return in;
 }
 
 /* rotate x and y before post X inout events */
@@ -461,7 +466,7 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 	DeviceIntPtr dev = pInfo->dev;
 	AxisInfoPtr axis_x, axis_y;
 	int tmp_coord;
-	double f;
+	float f;
 
 	/* scale into on topX/topY area */
 	axis_x = &dev->valuator->axes[0];
@@ -469,25 +474,27 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 
 	/* Don't try to scale relative axes */
 	if (axis_x->max_value > axis_x->min_value) {
-		f = (*x - priv->topX) / (double)(priv->bottomX - priv->topX);
-		f = wcmBorderDistortionCorrection(f, priv->distortion_topX_border, priv->distortion_topX_poly);
-		f = 1.0 - f;
-		f = wcmBorderDistortionCorrection(f, priv->distortion_bottomX_border, priv->distortion_bottomX_poly);
-		f = 1.0 - f;
+		f = (*x - priv->topX) / (float)(priv->bottomX - priv->topX); // f is approximatively in [0,1]
 
-		*x = round(f * (axis_x->max_value - axis_x->min_value) + axis_x->min_value);
+		// fix the topX border distortion with a polynomial
+		f = wcmComputePolynomial(f, priv->distortion_topX_border, priv->distortion_topX_poly, 3);
+
+		// fix the bottomX border distortion with a polynomial
+		f = 1.0f - wcmComputePolynomial(1.0f - f, priv->distortion_bottomX_border, priv->distortion_bottomX_poly, 3);
+
+		*x = roundf(f * (axis_x->max_value - axis_x->min_value) + axis_x->min_value);
+
 		if (*x < axis_x->min_value) *x = axis_x->min_value;
 		if (*x > axis_x->max_value) *x = axis_x->max_value;
+		/* In the case of the two last if, the stylus is out of the screen and no events should be sent */
 	}
 	
 	if (axis_y->max_value > axis_y->min_value) {
-		f = (*y - priv->topY) / (double)(priv->bottomY - priv->topY);
-		f = wcmBorderDistortionCorrection(f, priv->distortion_topY_border, priv->distortion_topY_poly);
-		f = 1.0 - f;
-		f = wcmBorderDistortionCorrection(f, priv->distortion_bottomY_border, priv->distortion_bottomY_poly);
-		f = 1.0 - f;
+		f = (*y - priv->topY) / (float)(priv->bottomY - priv->topY);
+		f = wcmComputePolynomial(f, priv->distortion_topY_border, priv->distortion_topY_poly, 3);
+		f = 1.0f - wcmComputePolynomial(1.0f - f, priv->distortion_bottomY_border, priv->distortion_bottomY_poly, 3);
 
-		*y = round(f * (axis_y->max_value - axis_y->min_value) + axis_y->min_value);
+		*y = roundf(f * (axis_y->max_value - axis_y->min_value) + axis_y->min_value);
 		if (*y < axis_y->min_value) *y = axis_y->min_value;
 		if (*y > axis_y->max_value) *y = axis_y->max_value;
 	}

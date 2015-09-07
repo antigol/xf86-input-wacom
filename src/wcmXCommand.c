@@ -33,11 +33,7 @@
 #define XI_PROP_PRODUCT_ID "Device Product ID"
 #endif
 
-#ifndef XATOM_FLOAT
-#define XATOM_FLOAT "FLOAT"
-#endif
-
-static Atom float_type;
+static Atom float_atom;
 
 static void wcmBindToSerial(InputInfoPtr pInfo, unsigned int serial);
 
@@ -216,8 +212,8 @@ static Atom InitFloatAtom(DeviceIntPtr dev, const char *name, int nvalues, float
 	Atom atom;
 
 	atom = MakeAtom(name, strlen(name), TRUE);
-	XIChangeDeviceProperty(dev, atom, float_type, 32,
-						   PropModeReplace, nvalues, values, FALSE);
+	XIChangeDeviceProperty(dev, atom, float_atom, 32,
+			       PropModeReplace, nvalues, values, FALSE);
 	XISetDevicePropertyDeletable(dev, atom, FALSE);
 	return atom;
 }
@@ -247,10 +243,11 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	}
 
 	if (!IsPad(priv)) {
-		float_type = XIGetKnownProperty(XATOM_FLOAT);
-		if (!float_type) float_type = MakeAtom(XATOM_FLOAT, strlen(XATOM_FLOAT), TRUE);
+		//float_atom = XInternAtom(dpy, "FLOAT", FALSE);
+		float_atom = XIGetKnownProperty("FLOAT");
+		if (!float_atom) float_atom = MakeAtom("FLOAT", 5, TRUE);
 
-		if (float_type) {
+		if (float_atom) {
 			// topX, topY, bottomX, bottomY
 			for (i = 0; i < 4; ++i) {
 				fvalues[i*5+0] = 0.0; // border
@@ -719,13 +716,18 @@ int wcmDeleteProperty(DeviceIntPtr dev, Atom property)
 	return (i >= 0) ? BadAccess : Success;
 }
 
+/* help to copy the values from the parameters into the WacomDevice structure
+ * values[0] is the width of the distoation on a border
+ * values[1], values[2], ... are coefficients of the polynomials of x^3, x^2, x and constant
+ * all these values in units (WacomDevice::top, WacomDevice::bottom) -> (0,1) where 0 is mapped to the nearest border
+ */
 static void setDistortionProperty(float* values, float *border, float *polynomial)
 {
-	*border       = values[0]; // border width relatively to the screen dimension
-	polynomial[0] = values[1]; // x^3 coefficient of the polynomial
-	polynomial[1] = values[2]; // x^2 coefficient
-	polynomial[2] = values[3]; // x   coefficient
-	polynomial[3] = values[4]; // constant coefficient
+	*border       = values[0];
+	polynomial[0] = values[1];
+	polynomial[1] = values[2];
+	polynomial[2] = values[3];
+	polynomial[3] = values[4];
 }
 
 int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
@@ -766,7 +768,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	{
 		float *values = (float*)prop->data;
 
-		if (prop->size != 20 || prop->format != 32 || prop->type != float_type)
+		if (prop->size != 20 || prop->format != 32 || prop->type != float_atom)
 			return BadValue;
 
 		if (!checkonly)
