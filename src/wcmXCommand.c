@@ -728,6 +728,7 @@ static void setDistortionProperty(float* values, float *border, float *polynomia
 	polynomial[1] = values[2];
 	polynomial[2] = values[3];
 	polynomial[3] = values[4];
+	polynomial[4] = values[5];
 }
 
 int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
@@ -768,15 +769,15 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	{
 		float *values = (float*)prop->data;
 
-		if (prop->size != 20 || prop->format != 32 || prop->type != float_atom)
+		if (prop->size != 4*6 || prop->format != 32 || prop->type != float_atom)
 			return BadValue;
 
 		if (!checkonly)
 		{
-			setDistortionProperty(values,    &priv->distortion_topX_border,    priv->distortion_topX_poly);
-			setDistortionProperty(values+5,  &priv->distortion_topY_border,    priv->distortion_topY_poly);
-			setDistortionProperty(values+10, &priv->distortion_bottomX_border, priv->distortion_bottomX_poly);
-			setDistortionProperty(values+15, &priv->distortion_bottomY_border, priv->distortion_bottomY_poly);
+			setDistortionProperty(values,       &priv->distortion_topX_border,    priv->distortion_topX_poly);
+			setDistortionProperty(values+6,     &priv->distortion_topY_border,    priv->distortion_topY_poly);
+			setDistortionProperty(values+6+6,   &priv->distortion_bottomX_border, priv->distortion_bottomX_poly);
+			setDistortionProperty(values+6+6+6, &priv->distortion_bottomY_border, priv->distortion_bottomY_poly);
 		}
 	} else if (property == prop_pressurecurve)
 	{

@@ -440,9 +440,9 @@ static void sendCommonEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 
 /* compute the polynomial of order /order
  * /polynomial must contain coefficients from the higher order to the constant
- *          { /in         if /in < /limit
+ *          { /in         if /in >= /limit
  * result = {
- *          { Poly(/in)   if /in >= /limit
+ *          { Poly(/in)   if /in < /limit
  */
 static float wcmComputePolynomial(float in, float limit, float* polynomial, int order)
 {
@@ -477,10 +477,10 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 		f = (*x - priv->topX) / (float)(priv->bottomX - priv->topX); // f is approximatively in [0,1]
 
 		// fix the topX border distortion with a polynomial
-		f = wcmComputePolynomial(f, priv->distortion_topX_border, priv->distortion_topX_poly, 3);
+		f = wcmComputePolynomial(f, priv->distortion_topX_border, priv->distortion_topX_poly, 4);
 
 		// fix the bottomX border distortion with a polynomial
-		f = 1.0f - wcmComputePolynomial(1.0f - f, priv->distortion_bottomX_border, priv->distortion_bottomX_poly, 3);
+		f = 1.0f - wcmComputePolynomial(1.0f - f, priv->distortion_bottomX_border, priv->distortion_bottomX_poly, 4);
 
 		*x = roundf(f * (axis_x->max_value - axis_x->min_value) + axis_x->min_value);
 
@@ -491,8 +491,8 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 	
 	if (axis_y->max_value > axis_y->min_value) {
 		f = (*y - priv->topY) / (float)(priv->bottomY - priv->topY);
-		f = wcmComputePolynomial(f, priv->distortion_topY_border, priv->distortion_topY_poly, 3);
-		f = 1.0f - wcmComputePolynomial(1.0f - f, priv->distortion_bottomY_border, priv->distortion_bottomY_poly, 3);
+		f = wcmComputePolynomial(f, priv->distortion_topY_border, priv->distortion_topY_poly, 4);
+		f = 1.0f - wcmComputePolynomial(1.0f - f, priv->distortion_bottomY_border, priv->distortion_bottomY_poly, 4);
 
 		*y = roundf(f * (axis_y->max_value - axis_y->min_value) + axis_y->min_value);
 		if (*y < axis_y->min_value) *y = axis_y->min_value;

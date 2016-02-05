@@ -267,10 +267,10 @@ struct _WacomDeviceRec
 	float distortion_topY_border;
 	float distortion_bottomX_border;
 	float distortion_bottomY_border;
-	float distortion_topX_poly[4];
-	float distortion_topY_poly[4];
-	float distortion_bottomX_poly[4];
-	float distortion_bottomY_poly[4];
+	float distortion_topX_poly[5];
+	float distortion_topY_poly[5];
+	float distortion_bottomX_poly[5];
+	float distortion_bottomY_poly[5];
 
 	/* button mapping information
 	 *
