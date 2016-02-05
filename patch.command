@@ -19,8 +19,10 @@ git diff --no-prefix wacom/master github/master > distortion.patch
 
 === patch and install ===
 
-apt-get source xserver-xorg-input-wacom 
+apt-get source xf86-input-wacom
 
 patch -p0 < path/to/distortion.patch
 
-debuild -us -uc
+sudo apt-get install devscripts build-essential lintian
+
+dpkg-buildpackage -us -uc
