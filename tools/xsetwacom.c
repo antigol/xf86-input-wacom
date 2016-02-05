@@ -1026,7 +1026,7 @@ static int special_map_core(Display *dpy, int argc, char **argv, unsigned long *
 	static int once_only = 1;
 	if (once_only)
 	{
-		printf ("Note: The \"core\" keyword is not supported anymore and "
+		fprintf(stderr, "Note: The \"core\" keyword is not supported anymore and "
 			"will be ignored.\n");
 		once_only = 0;
 	}
@@ -1053,7 +1053,7 @@ static int special_map_displaytoggle(Display *dpy, int argc, char **argv, unsign
 	static int once_only = 1;
 	if (once_only)
 	{
-		printf ("Note: The \"displaytoggle\" keyword is not supported "
+		fprintf(stderr, "Note: The \"displaytoggle\" keyword is not supported "
 			"anymore and will be ignored.\n");
 		once_only = 0;
 	}
@@ -1951,6 +1951,7 @@ static int get_actions(Display *dpy, XDevice *dev,
 	unsigned long nitems, bytes_after, *data;
 	int i;
 	char buff[1024] = {0};
+	int last_type;
 
 	prop = XInternAtom(dpy, param->prop_name, True);
 
@@ -1979,9 +1980,9 @@ static int get_actions(Display *dpy, XDevice *dev,
 		   AnyPropertyType, &type, &format, &nitems,
 		   &bytes_after, (unsigned char**)&data);
 
+	last_type = 0;
 	for (i = 0; i < nitems; i++)
 	{
-		static int last_type;
 		unsigned long action = data[i];
 		int current_type;
 		int detail;
@@ -2021,7 +2022,7 @@ static int get_actions(Display *dpy, XDevice *dev,
 		if (current_type == AC_KEY)
 			sprintf(str, "%c%s ", press_str,
 				XKeysymToString(detail));
-		else
+		else if (current_type == AC_BUTTON)
 			sprintf(str, "%c%d ", press_str, detail);
 		strcat(buff, str);
 		last_type = current_type;
