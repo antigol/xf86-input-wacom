@@ -11,6 +11,9 @@
 	remote = github
 	merge = refs/heads/master
 
+git pull wacom master
+git pull
+git push
 git diff --no-prefix wacom/master github/master > distortion.patch
 
 

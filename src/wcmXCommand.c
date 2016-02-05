@@ -223,7 +223,7 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	WacomCommonPtr common = priv->common;
 	int values[WCM_MAX_BUTTONS];
-	float fvalues[20];
+	float fvalues[4*6];
 	int i;
 
 	DBG(10, priv, "\n");
@@ -251,10 +251,11 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 			// topX, topY, bottomX, bottomY
 			for (i = 0; i < 4; ++i) {
 				fvalues[i*5+0] = 0.0; // border
-				fvalues[i*5+1] = 0.0; // x^3
-				fvalues[i*5+2] = 0.0; // x^2
-				fvalues[i*5+3] = 1.0; // x
-				fvalues[i*5+4] = 0.0; // 1
+				fvalues[i*5+1] = 0.0; // x^4
+				fvalues[i*5+2] = 0.0; // x^3
+				fvalues[i*5+3] = 0.0; // x^2
+				fvalues[i*5+4] = 1.0; // x
+				fvalues[i*5+5] = 0.0; // 1
 			}
 			prop_distortion = InitFloatAtom(pInfo->dev, WACOM_PROP_TABLET_DISTORTION, 20, fvalues);
 		}
@@ -718,7 +719,7 @@ int wcmDeleteProperty(DeviceIntPtr dev, Atom property)
 
 /* help to copy the values from the parameters into the WacomDevice structure
  * values[0] is the width of the distoation on a border
- * values[1], values[2], ... are coefficients of the polynomials of x^3, x^2, x and constant
+ * values[1], values[2], ... are coefficients of the polynomials of x^4, x^3, x^2, x and constant
  * all these values in units (WacomDevice::top, WacomDevice::bottom) -> (0,1) where 0 is mapped to the nearest border
  */
 static void setDistortionProperty(float* values, float *border, float *polynomial)
